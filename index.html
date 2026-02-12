@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        /* 1. 让整个身体去边框、透明 */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* 隐藏滚动条 */
+            background-color: transparent;
+
+            /* 让内容垂直水平居中 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            /* 占满整个窗口高度 */
+
+            /* 关键：让整个窗口区域可拖拽 */
+            -webkit-app-region: drag;
+        }
+
+        /* 2. 给图片下“缩身咒” */
+        img {
+            /* 核心代码：让图片最大只能撑满窗口，不许溢出 */
+            max-width: 100%;
+            max-height: 100%;
+
+            /* 保持图片比例，不会被压扁或拉长 */
+            object-fit: contain;
+
+            /* 禁止用户选中图片变蓝 */
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* 2. 宠物容器 */
+        #pet-container {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 3. 眼睛层样式 */
+        #eye-layer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+
+            /* 确保眼睛图片本身不缩放，按原图大小显示 */
+            width: auto;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="pet-container">
+        <img id="pet-img" src="assets/idle/0.png" />
+        <img id="eye-layer" src="assets/eyes/normal.png" />
+
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const petImg = document.getElementById('pet-img');
+        const eyeLayer = document.getElementById('eye-layer');
+
+        ipcRenderer.on('key-action', (event, state, keyCode) => {
+            if (state === 'down') {
+                // 简单的区域逻辑判断
+                if (keyCode === 57 || keyCode === 28) {
+                    // 57 是空格, 28 是回车 (针对 uiohook 的键码)
+                    petImg.src = 'assets/action/mid.png';
+                } else if (keyCode < 30) {
+                    // 键码较小的通常在左边
+                    petImg.src = 'assets/action/left.png';
+                } else {
+                    petImg.src = 'assets/action/right.png';
+                }
+            } else {
+                // 松开所有键回到待机
+                petImg.src = 'assets/idle/0.png';
+            }
+        });
+
+        // ========== 眼睛追踪逻辑 ==========
+        let currentEyeX = 0;
+        let currentEyeY = 0;
+        let targetEyeX = 0;
+        let targetEyeY = 0;
+        const smoothingFactor = 0.2; // 平滑系数
+        const maxMoveX = 2; // 最大水平移动距离（像素）
+        const maxMoveY = 1.5; // 最大垂直移动距离（像素）
+        const resetDistance = 2000; // 鼠标距离超过此值时眼睛回中
+
+        // 监听全局鼠标位置（从主进程接收）
+        ipcRenderer.on('mouse-position', (event, data) => {
+            const { mouseX, mouseY, windowX, windowY, windowWidth, windowHeight } = data;
+
+            // 计算窗口中心在屏幕上的位置
+            const windowCenterX = windowX + windowWidth / 2;
+            const windowCenterY = windowY + windowHeight / 2;
+
+            // 计算鼠标相对于窗口中心的偏移
+            const deltaX = mouseX - windowCenterX;
+            const deltaY = mouseY - windowCenterY;
+
+            // 计算距离
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            // 如果鼠标太远，眼睛回到中心
+            if (distance > resetDistance) {
+                targetEyeX = 0;
+                targetEyeY = 0;
+            } else {
+                // 计算角度
+                const angle = Math.atan2(deltaY, deltaX);
+                // 根据距离计算移动量（距离越近移动越多）
+                const moveFactor = Math.min(distance / 150, 1);
+
+                // 计算目标位置
+                targetEyeX = Math.cos(angle) * maxMoveX * moveFactor;
+                targetEyeY = Math.sin(angle) * maxMoveY * moveFactor;
+            }
+        });
+
+        // 平滑动画循环
+        function animateEyes() {
+            // 使用缓动函数平滑过渡
+            currentEyeX += (targetEyeX - currentEyeX) * smoothingFactor;
+            currentEyeY += (targetEyeY - currentEyeY) * smoothingFactor;
+
+            // 应用变换（保持居中的同时添加偏移）
+            eyeLayer.style.transform = `translate(calc(-50% + ${currentEyeX}px), calc(-50% + ${currentEyeY}px))`;
+
+            requestAnimationFrame(animateEyes);
+        }
+
+        // 启动动画
+        animateEyes();
+
+    </script>
+</body>
+
+</html>

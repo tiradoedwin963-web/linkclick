@@ -1,0 +1,13 @@
+{
+    "eyeImagePath": "assets/eyes/normal.png",
+    "eyePosition": {
+        "top": "10%",
+        "left": "10%"
+    },
+    "movementRange": {
+        "maxX": 12,
+        "maxY": 10
+    },
+    "smoothingFactor": 0.2,
+    "resetDistance": 400
+}

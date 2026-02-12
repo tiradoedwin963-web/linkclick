@@ -1,0 +1,44 @@
+{
+  "name": "linkclick-pet",
+  "version": "1.0.0",
+  "description": "My linkclick Desktop Pet",
+  "main": "main.js",
+  "author": "YourName",
+  "license": "ISC",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.linkclick.pet",
+    "productName": "LinkclickPet",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist/*",
+      "!**/*.ts",
+      "!*.code-workspace",
+      "!LICENSE",
+      "!README.md"
+    ],
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    }
+  },
+  "dependencies": {
+    "pixi.js": "^7.0.0",
+    "uiohook-napi": "^1.5.0"
+  },
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}
