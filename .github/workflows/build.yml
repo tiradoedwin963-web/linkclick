@@ -1,23 +1,22 @@
 name: Build macOS App
-
 on:
   push:
-    branches: [ main, master ]
-
+    branches: [ main ]
 jobs:
   build-mac:
     runs-on: macos-latest
-
     steps:
     - name: Check out code
-      uses: actions/checkout@v3
+      # 全部升级到 v4 版本
+      uses: actions/checkout@v4
 
     - name: Install Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: 18 # 根据你的项目需要调整版本
+        node-version: 18
 
     - name: Install Dependencies
+      # 确保原生模块编译正常
       run: npm install
 
     - name: Build for macOS
@@ -26,7 +25,8 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      # 必须升级到 v4 才能解决报错
+      uses: actions/upload-artifact@v4
       with:
         name: Mac-Build-Output
         path: dist/*.dmg
